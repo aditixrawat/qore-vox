@@ -24,7 +24,7 @@
   function pick() { var w = window.innerWidth; return w >= 980 ? 'd' : w >= 640 ? 't' : 'm'; }
   function load(name, cb) {
     if (window.QVD && window.QVD[name]) return cb();
-    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=layout1'; s.onload = cb; document.head.appendChild(s);
+    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=copy6'; s.onload = cb; document.head.appendChild(s);
   }
 
   // ---------- string table ----------

@@ -165,3 +165,42 @@ button, input { font-family: inherit; }
   html { scroll-behavior: auto; }
   *, ::before, ::after { animation: auto ease 0s 1 normal none running none !important; transition: none !important; }
 }
+
+@media (max-width: 720px) {
+  [data-dc-tpl="713"] {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+  [data-dc-tpl="715"] {
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    text-align: left !important;
+    padding: 14px 16px !important;
+    font-size: 14px !important;
+    line-height: 1.35 !important;
+  }
+}
+
+@media (max-width: 639px) {
+  [data-dc-tpl="524"] {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+  [data-dc-tpl="525"] {
+    margin: 0 auto;
+  }
+  [data-dc-tpl="527"] {
+    align-items: center !important;
+    text-align: center !important;
+    flex: 0 1 auto !important;
+    width: 100%;
+  }
+  [data-dc-tpl="530"] {
+    justify-content: center !important;
+    align-items: center !important;
+    flex-direction: column !important;
+    width: 100%;
+  }
+}
