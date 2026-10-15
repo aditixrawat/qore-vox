@@ -151,19 +151,8 @@ button, input { font-family: inherit; }
   box-shadow: 0 3px 10px rgba(0, 20, 32, 0.4);
   pointer-events: none;
 }
-.vox-press-fin { left: 57%; top: 18.5%; }
-.vox-press::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 9px;
-  height: 9px;
-  margin: -4.5px 0 0 -4.5px;
-  border-radius: 50%;
-  background: #3d8cff;
-  animation: voxBeat 1.15s ease-in-out infinite;
-}
+.vox-press-fin { left: 57%; top: 25%; }
+.vox-press-34 { left: 66%; top: 34%; }
 .vox-press::after {
   content: "";
   position: absolute;
