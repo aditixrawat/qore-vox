@@ -1,0 +1,139 @@
+/* Pebble Qore™ Vox landing page */
+.sc-placeholder { background: color-mix(in srgb, currentcolor 8%, transparent 92%); border: 1px solid color-mix(in srgb, currentcolor, transparent); border-radius: 2px; box-sizing: border-box; overflow: hidden; }
+@keyframes sc-shine { 
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+html.sc-dc-streaming .sc-placeholder, html.sc-dc-streaming .sc-interp.sc-missing { position: relative; background: color-mix(in srgb, currentcolor 5%, transparent 95%); border-color: transparent; }
+html.sc-dc-streaming .sc-placeholder::before, html.sc-dc-streaming .sc-interp.sc-missing::before { content: ""; position: absolute; inset: 0px; pointer-events: none; background: linear-gradient(90deg, rgba(217, 119, 87, 0) 25%, rgba(247, 225, 211, 0.95) 37%, rgba(217, 119, 87, 0) 63%) 0% 0% / 400% 100%; animation: 1.4s ease 0s infinite normal none running sc-shine; }
+html.sc-dc-streaming .sc-placeholder:nth-child(n+9 of .sc-placeholder)::before, html.sc-dc-streaming .sc-interp.sc-missing:nth-child(n+9 of .sc-interp.sc-missing)::before { animation: auto ease 0s 1 normal none running none; background: color-mix(in srgb, currentcolor 8%, transparent 92%); }
+.sc-placeholder-error { padding: 4px 8px; font: 11px / 1.4 ui-monospace, monospace; color: color-mix(in srgb, currentcolor 70%, transparent 30%); word-break: break-word; }
+.sc-interp.sc-missing { display: inline-block; width: 2em; height: 1em; overflow: hidden; vertical-align: text-bottom; background: rgba(255, 255, 255, 0.3); border: 1px solid rgba(0, 0, 0, 0.5); border-radius: 2px; box-sizing: border-box; color: transparent; user-select: none; }
+.sc-interp.sc-unresolved { font-family: ui-monospace, monospace; font-size: 0.85em; color: color-mix(in srgb, currentcolor, transparent); background: color-mix(in srgb, currentcolor 10%, transparent 90%); border-radius: 3px; padding: 0px 3px; }
+.sc-host.sc-has-error { position: relative; }
+.sc-logic-error { position: absolute; top: 8px; left: 8px; z-index: 2147483647; max-width: 60ch; padding: 6px 10px; background: rgb(176, 0, 32); color: rgb(255, 255, 255); font: 12px / 1.4 ui-monospace, monospace; border-radius: 4px; white-space: pre-wrap; pointer-events: none; }
+@media print {
+  @page { margin: 0.5cm; }
+  figure, table { break-inside: avoid; }
+  #dc-root, #dc-root > .sc-host { height: auto; }
+  *, ::before, ::after { print-color-adjust: exact; backdrop-filter: none !important; animation-delay: -99s !important; animation-duration: 0.001s !important; animation-iteration-count: 1 !important; animation-fill-mode: both !important; animation-play-state: running !important; transition-duration: 0s !important; }
+}
+x-dc { display: none !important; }
+.h1mo5l1e:hover { background: rgba(0, 45, 70, 0.06) !important; }
+.h1uw2290:hover { color: rgb(0, 45, 70) !important; }
+.h1cx56ai:hover { background: rgba(0, 45, 70, 0.05) !important; color: rgb(0, 45, 70) !important; }
+.h10he8k3:hover { color: rgb(0, 45, 70) !important; background: rgb(97, 194, 182) !important; }
+.h1iv32b7:hover { background: rgb(255, 255, 255) !important; }
+.h1t2dupd:hover { opacity: 1 !important; }
+.h1qo4338:hover { transform: translateY(-1px) !important; color: rgb(0, 45, 70) !important; }
+.h1txnnru:hover { transform: translateY(-5px) !important; border-color: rgba(22, 214, 189, 0.333) !important; box-shadow: rgba(0, 20, 32, 0.22) 0px 36px 70px, rgba(22, 214, 189, 0.133) 0px 0px 0px 1px !important; }
+.h1u8ihyy:hover { transform: translateY(-5px) !important; border-color: rgba(255, 107, 107, 0.333) !important; box-shadow: rgba(0, 20, 32, 0.22) 0px 36px 70px, rgba(255, 107, 107, 0.133) 0px 0px 0px 1px !important; }
+.h1he6khm:hover { transform: translateY(-5px) !important; border-color: rgba(255, 77, 94, 0.333) !important; box-shadow: rgba(0, 20, 32, 0.22) 0px 36px 70px, rgba(255, 77, 94, 0.133) 0px 0px 0px 1px !important; }
+.h1sy4s3e:hover { transform: translateY(-5px) !important; border-color: rgba(79, 193, 245, 0.333) !important; box-shadow: rgba(0, 20, 32, 0.22) 0px 36px 70px, rgba(79, 193, 245, 0.133) 0px 0px 0px 1px !important; }
+.h1kn28vu:hover { transform: translateY(-5px) !important; border-color: rgba(255, 154, 60, 0.333) !important; box-shadow: rgba(0, 20, 32, 0.22) 0px 36px 70px, rgba(255, 154, 60, 0.133) 0px 0px 0px 1px !important; }
+.h1bubkxx:hover { background: rgba(255, 255, 255, 0.14) !important; }
+.h1dvut2y:hover { transform: translateY(-4px) !important; }
+.h8n4j19:hover { transform: translateY(-3px) !important; }
+.h1mwyfxc:hover { color: rgb(255, 255, 255) !important; }
+html, body { height: 100%; margin: 0px; }
+#dc-root, #dc-root > .sc-host { height: 100%; }
+html { scroll-behavior: smooth; }
+*, ::before, ::after { box-sizing: border-box; }
+body { margin: 0px; background: rgb(243, 245, 247); color: rgb(13, 27, 36); font-family: Figtree, system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+a { color: rgb(47, 143, 132); text-decoration: none; }
+a:hover { color: rgb(0, 45, 70); }
+button, input { font-family: inherit; }
+@keyframes voxBar { 
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+@keyframes voxRing { 
+  0% { transform: scale(0.9); opacity: 0.7; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+@keyframes voxSync-r { 
+  0% { left: 0%; opacity: 0; }
+  15%, 80% { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+@keyframes voxSync-l { 
+  0% { left: 100%; opacity: 0; }
+  15%, 80% { opacity: 1; }
+  100% { left: 0%; opacity: 0; }
+}
+@keyframes voxHub { 
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+@keyframes voxFill { 
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+@keyframes voxFade { 
+  0% { opacity: 0; transform: scale(1.02); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes voxGhost { 
+  0% { opacity: 0; transform: translateY(40px) scale(0.97); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes voxProd { 
+  0% { opacity: 0; transform: translateY(18px) scale(0.94); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes voxIn { 
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes voxStep { 
+  0% { background: rgba(0, 45, 70, 0.06); color: rgb(107, 123, 133); }
+  100% { background: rgb(0, 45, 70); color: rgb(255, 255, 255); }
+}
+@keyframes voxBeat { 
+  0%, 100% { transform: scale(1); }
+  15% { transform: scale(1.14); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.08); }
+}
+@keyframes voxGlow { 
+  0%, 100% { box-shadow: 0 0 16px color-mix(in srgb, var(--g) 22%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--g) 15%, transparent); }
+  50% { box-shadow: 0 0 30px color-mix(in srgb, var(--g) 45%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--g) 30%, transparent); }
+}
+@keyframes voxSheen { 
+  0% { background-position: 150% 0px; }
+  60%, 100% { background-position: -50% 0px; }
+}
+@keyframes voxFloat { 
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-2px); }
+}
+@keyframes voxSpin { 
+  100% { transform: rotate(360deg); }
+}
+@keyframes voxBlink { 
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+@keyframes voxFloat { 
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes voxBuzz1 { 
+  0%, 100% { transform: translateX(0px); }
+  25% { transform: translateX(-2px) rotate(-0.5deg); }
+  75% { transform: translateX(2px) rotate(0.5deg); }
+}
+@keyframes voxBuzz2 { 
+  0%, 100% { transform: translateX(0px); }
+  25% { transform: translateX(-5px) rotate(-1.2deg); }
+  75% { transform: translateX(5px) rotate(1.2deg); }
+}
+@keyframes voxBuzz3 { 
+  0%, 100% { transform: translateX(0px); }
+  25% { transform: translateX(-9px) rotate(-2deg); }
+  75% { transform: translateX(9px) rotate(2deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, ::before, ::after { animation: auto ease 0s 1 normal none running none !important; transition: none !important; }
+}
