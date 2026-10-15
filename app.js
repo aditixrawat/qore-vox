@@ -23,8 +23,9 @@
 
   function pick() { var w = window.innerWidth; return w >= 980 ? 'd' : w >= 640 ? 't' : 'm'; }
   function load(name, cb) {
-    if (window.QVD && window.QVD[name]) return cb();
-    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=copy6'; s.onload = cb; document.head.appendChild(s);
+    window.QVD = window.QVD || {};
+    if (window.QVD[name]) return cb();
+    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=copy10'; s.onload = cb; document.head.appendChild(s);
   }
 
   // ---------- string table ----------
@@ -165,6 +166,27 @@
       var tab = ((el.querySelector('.sc-interp') || el).textContent || '').trim();
       var ti = MOVE_TABS.indexOf(tab);
       if (ti >= 0) { goMoveTab(ti); return; }
+    }
+    var phoneLab = ((el.querySelector('.sc-interp') || el).textContent || '').trim();
+    var PHONE_TABS = ['Transcribe', 'Summarize', 'Segment Summary'];
+    var pti = PHONE_TABS.indexOf(phoneLab);
+    if (pti >= 0 && el.closest('[data-dc-tpl="235"]')) {
+      var pin = ref('vPinRef');
+      if (pin) {
+        var top = pin.getBoundingClientRect().top + (window.scrollY || document.body.scrollTop || 0);
+        var span = pin.offsetHeight - window.innerHeight;
+        var dest = top + Math.max(0, span) * ((pti + 0.5) / 3);
+        try { window.scrollTo({ top: dest, behavior: reduce ? 'auto' : 'smooth' }); } catch (err) {}
+        document.body.scrollTop = dest;
+      }
+      if (pti === 0) { world = D.B[ctx].slice(); last = null; }
+      else {
+        var psig = pti === 1 ? '1d69h2i' : '1eg340';
+        var pm = D.A[ctx][psig];
+        if (pm && pm.u) { world = pm.u.slice(); last = psig; }
+      }
+      render();
+      return;
     }
     var sig = el.getAttribute('data-x'), m = D && D.A[ctx][sig]; if (!m) return;
     if (m.pd) e.preventDefault();

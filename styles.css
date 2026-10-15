@@ -204,3 +204,7 @@ button, input { font-family: inherit; }
     width: 100%;
   }
 }
+
+#v4-uc-2 {
+  object-position: 50% 0%;
+}
