@@ -10,11 +10,21 @@
   var ORBIT = ['25deg 72deg', '80deg 82deg', '-25deg 66deg', '180deg 90deg'];
   var SPOT_NAMES = ['Mic', 'Record button', 'Privacy light', '4PD sensor'];
   var D, bp, ctx, world, spot, last = null, cache = {}, Zv = {}, toastT, mv = null, hs = null, observers = [];
+  var healthRun = 0;
+  var HEALTH_NUMS = [
+    ['330', 82],
+    ['338', 12907],
+    ['344', 67],
+    ['354', 59],
+    ['397', 23],
+    ['434', 95],
+    ['457', 69]
+  ];
 
   function pick() { var w = window.innerWidth; return w >= 980 ? 'd' : w >= 640 ? 't' : 'm'; }
   function load(name, cb) {
     if (window.QVD && window.QVD[name]) return cb();
-    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js'; s.onload = cb; document.head.appendChild(s);
+    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=health'; s.onload = cb; document.head.appendChild(s);
   }
 
   // ---------- string table ----------
@@ -147,6 +157,8 @@
     var chap = 'overview';
     ['voice', 'health', 'finishes', 'compare'].forEach(function (id) { var el = document.getElementById(id); if (el && el.getBoundingClientRect().top < 160) chap = id; });
     set('chap', chap);
+    var recSec = document.getElementById('health');
+    if (recSec && recSec.getBoundingClientRect().top < window.innerHeight * 0.78) set('recOn', 'true');
     if (ch) render();
   }
 
@@ -175,7 +187,15 @@
     observers.forEach(function (o) { o.disconnect(); }); observers = [];
     reveal();
     once('demoRef', 'demoGo', { threshold: 0.3 });
-    once('recRef', 'recOn', { threshold: 0.08, rootMargin: '0px 0px -15% 0px' });
+    once('recRef', 'recOn', { threshold: 0.01, rootMargin: '0px 0px -8% 0px' });
+    var health = document.getElementById('health');
+    if (health && Zv.recOn !== 'true') {
+      var ho = new IntersectionObserver(function (es) {
+        if (!es.some(function (e) { return e.isIntersecting; })) return;
+        ho.disconnect(); Zv.recOn = 'true'; render();
+      }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+      ho.observe(health); observers.push(ho);
+    }
     var des = document.getElementById('design');
     if (des && !mv) { var o = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { o.disconnect(); loadMV(); } }, { rootMargin: '800px 0px' }); o.observe(des); observers.push(o); }
   }
@@ -221,11 +241,40 @@
       b.style.cssText = 'position:relative;width:' + (on ? 40 : 32) + 'px;height:' + (on ? 40 : 32) + 'px;padding:0;border:0;border-radius:50%;cursor:pointer;display:grid;place-items:center;font-family:Figtree,sans-serif;font-size:13px;font-weight:700;color:#002d46;transition:all .3s ' + EASE + ';background:' + (on ? '#52b6aa' : 'rgba(255,255,255,0.92)') + ';box-shadow:' + (on ? '0 0 0 6px rgba(82,182,170,0.28), 0 8px 20px rgba(0,45,70,0.25)' : '0 0 0 4px rgba(255,255,255,0.45), 0 6px 16px rgba(0,45,70,0.2)');
     });
   }
+  function healthNode(tpl) {
+    var sec = document.getElementById('health'); if (!sec) return null;
+    var el = sec.querySelector('[data-dc-tpl="' + tpl + '"]'); if (!el) return null;
+    return el.querySelector('.sc-interp') || el;
+  }
+  function writeHealth(el, n) { el.textContent = String(n); }
+  function playHealth(force) {
+    var sec = document.getElementById('health'); if (!sec) return;
+    if (Zv.recOn !== 'true') return;
+    if (healthRun === 1 && !force) return;
+    if (healthRun === 2 && !force) {
+      HEALTH_NUMS.forEach(function (p) { var el = healthNode(p[0]); if (el) writeHealth(el, p[1]); });
+      return;
+    }
+    healthRun = 1;
+    var dur = reduce ? 0 : 1400, t0 = performance.now();
+    function frame(now) {
+      var u = dur ? Math.min(1, (now - t0) / dur) : 1;
+      var e = 1 - Math.pow(1 - u, 3);
+      HEALTH_NUMS.forEach(function (p) {
+        var el = healthNode(p[0]); if (!el) return;
+        writeHealth(el, Math.round(p[1] * e));
+      });
+      if (u < 1) requestAnimationFrame(frame);
+      else healthRun = 2;
+    }
+    requestAnimationFrame(frame);
+  }
   var lastCtx = null;
   function afterRender() {
     if (mv && !mv.isConnected) { var ph = findPh(); if (ph) ph.parentNode.replaceChild(mv, ph); }
     if (lastCtx !== ctx) { lastCtx = ctx; tint(); }
     updateMV();
+    playHealth(false);
   }
 
   // ---------- boot / breakpoints ----------
@@ -233,6 +282,7 @@
     bp = name; D = window.QVD[bp];
     if (!keepState) { ctx = D.init.colour; spot = D.init.spot; }
     world = D.B[ctx].slice(); last = null;
+    healthRun = 0;
     if (reduce) { Zv.demoGo = 'true'; Zv.recOn = 'true'; }
     root.innerHTML = '';
     render(); tick(); setupObservers();
