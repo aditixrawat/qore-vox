@@ -24,7 +24,7 @@
   function pick() { var w = window.innerWidth; return w >= 980 ? 'd' : w >= 640 ? 't' : 'm'; }
   function load(name, cb) {
     if (window.QVD && window.QVD[name]) return cb();
-    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=health'; s.onload = cb; document.head.appendChild(s);
+    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=press'; s.onload = cb; document.head.appendChild(s);
   }
 
   // ---------- string table ----------
@@ -123,23 +123,42 @@
   });
 
   // ---------- hero split + finishes tilt ----------
-  var drag = null, finX = null;
+  var drag = null, finX = null, splitPid = null;
   function setSplit(el, p) { p = Math.max(8, Math.min(92, p)); el.__sp = p; el.style.setProperty('--split', p + '%'); el.setAttribute('aria-valuenow', Math.round(p)); }
   function splitAt(el, e) { var r = el.getBoundingClientRect(); setSplit(el, ((e.clientX - r.left) / r.width) * 100); }
+  function restoreSplit() {
+    var sp = ref('splitRef'); if (!sp) return;
+    if (sp.__sp == null) sp.__sp = 50;
+    sp.style.setProperty('--split', sp.__sp + '%');
+    sp.setAttribute('aria-valuenow', Math.round(sp.__sp));
+  }
+  function beginSplit(sp, e) {
+    if (!sp || e.target.closest('a, button, [data-x]')) return;
+    drag = sp; splitPid = e.pointerId;
+    try { sp.setPointerCapture(e.pointerId); } catch (err) {}
+    splitAt(sp, e);
+    e.preventDefault();
+  }
   root.addEventListener('pointerdown', function (e) {
-    var sp = e.target.closest('[data-ref="splitRef"]'); if (sp) { drag = sp; splitAt(sp, e); }
+    var handle = e.target.closest('[data-ref="splitHandle"]');
+    var sp = e.target.closest('[data-ref="splitRef"]');
+    if (handle && sp) beginSplit(sp, e);
+    else if (sp && e.pointerType !== 'touch') beginSplit(sp, e);
     if (e.target.closest('[data-ref="finRef"]')) finX = e.clientX;
   });
   root.addEventListener('pointermove', function (e) {
-    if (drag) splitAt(drag, e);
+    if (drag) { splitAt(drag, e); e.preventDefault(); }
     var fin = e.target.closest && e.target.closest('[data-ref="finRef"]'), t = ref('finTiltRef');
     if (fin && t && !reduce && e.pointerType !== 'touch') { var r = fin.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5; t.style.transform = 'perspective(1200px) rotateY(' + (x * 14) + 'deg) rotateX(' + (-y * 8) + 'deg)'; }
   });
   root.addEventListener('pointerleave', function () { var t = ref('finTiltRef'); if (t) t.style.transform = ''; }, true);
-  window.addEventListener('pointerup', function (e) {
-    drag = null;
+  function endSplit(e) {
+    if (drag && splitPid != null) { try { drag.releasePointerCapture(splitPid); } catch (err) {} }
+    drag = null; splitPid = null;
     if (finX != null) { var d = e.clientX - finX; finX = null; if (Math.abs(d) > 50) { ctx = (ctx + (d < 0 ? 1 : 2)) % 3; world = D.B[ctx].slice(); last = null; render(); } }
-  });
+  }
+  window.addEventListener('pointerup', endSplit);
+  window.addEventListener('pointercancel', endSplit);
 
   // ---------- scroll-driven chapters ----------
   var raf = 0;
@@ -275,6 +294,36 @@
     if (lastCtx !== ctx) { lastCtx = ctx; tint(); }
     updateMV();
     playHealth(false);
+    restoreSplit();
+    markPress();
+  }
+
+  function markPress() {
+    if (!document.getElementById('vox-press-css')) {
+      var css = document.createElement('style');
+      css.id = 'vox-press-css';
+      css.textContent = '.vox-press-wrap{position:relative;display:block;width:62%;max-width:220px;line-height:0}' +
+        '.vox-press-wrap img{display:block;width:100%;height:auto}' +
+        '.vox-press{position:absolute;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;border:2px solid #fff;box-shadow:0 3px 10px rgba(0,20,32,.4);pointer-events:none}' +
+        '.vox-press-fin{left:57%;top:18.5%}' +
+        '.vox-press-34{left:66%;top:31%}' +
+        '.vox-press::before{content:"";position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:#3d8cff;animation:voxBeat 1.15s ease-in-out infinite}' +
+        '.vox-press::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:2px solid #3d8cff;animation:voxRing 1.5s ease-out infinite}';
+      document.head.appendChild(css);
+    }
+    var demo = ref('demoRef'); if (!demo) return;
+    var img = demo.querySelector('img[alt*="recording"]');
+    if (!img || img.parentElement.classList.contains('vox-press-wrap')) return;
+    var wrap = document.createElement('span');
+    wrap.className = 'vox-press-wrap';
+    img.style.width = '100%';
+    img.style.maxWidth = 'none';
+    img.parentNode.insertBefore(wrap, img);
+    wrap.appendChild(img);
+    var hit = document.createElement('span');
+    hit.className = 'vox-press' + (/\bfin-b\.webp/.test(img.getAttribute('src') || '') ? ' vox-press-fin' : ' vox-press-34');
+    hit.setAttribute('aria-hidden', 'true');
+    wrap.appendChild(hit);
   }
 
   // ---------- boot / breakpoints ----------
