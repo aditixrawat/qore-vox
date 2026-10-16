@@ -27,7 +27,7 @@
   function load(name, cb) {
     window.QVD = window.QVD || {};
     if (window.QVD[name]) return cb();
-    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=copy23'; s.onload = cb; document.head.appendChild(s);
+    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=copy25'; s.onload = cb; document.head.appendChild(s);
   }
 
   // ---------- string table ----------
@@ -312,8 +312,14 @@
     var chap = 'overview';
     ['voice', 'health', 'finishes', 'compare'].forEach(function (id) { var el = document.getElementById(id); if (el && el.getBoundingClientRect().top < 160) chap = id; });
     set('chap', chap);
-    var recSec = document.getElementById('health');
-    if (recSec && recSec.getBoundingClientRect().top < window.innerHeight * 0.78) set('recOn', 'true');
+    var rec = ref('recRef') || document.getElementById('health');
+    if (rec) {
+      var rr = rec.getBoundingClientRect();
+      if (rr.top < window.innerHeight * 0.62 && rr.bottom > window.innerHeight * 0.28) {
+        if (Zv.recOn !== 'true') healthRun = 0;
+        set('recOn', 'true');
+      }
+    }
     if (ch) render();
     placeDayCard();
     syncAnims();
@@ -359,26 +365,24 @@
       if (sticky.dataset.dayPad) { sticky.style.paddingTop = ''; delete sticky.dataset.dayPad; }
       return;
     }
-    var copy = dy.querySelector('h2');
-    var copyEl = copy ? copy.parentElement : null;
-    var base = 28;
+    var copyEl = dy.querySelector('[data-dc-tpl="153"]');
+    var base = 12;
     var chh = card.offsetHeight;
     var copyH = copyEl ? copyEl.offsetHeight : 0;
-    var gap = 16;
+    var gap = 20;
     var stickyTop = sticky.getBoundingClientRect().top;
-    var limit = window.innerHeight - 12;
+    var limit = window.innerHeight - 16;
     var bar = document.querySelector('[data-dc-tpl="760"]');
     if (bar) {
       var br = bar.getBoundingClientRect();
-      if (br.top < window.innerHeight && br.bottom > 0) limit = window.innerHeight - bar.offsetHeight - 36;
+      if (br.top < window.innerHeight && br.bottom > 0) limit = window.innerHeight - bar.offsetHeight - 24;
     }
     var room = Math.max(0, limit - stickyTop);
-    var maxPad = Math.max(base, room - chh - gap - copyH);
-    var ideal = Math.max(base, (room - chh) / 2);
-    var centerPad = Math.min(ideal, maxPad);
+    var maxPad = room - chh - gap - copyH;
+    var pinned = Math.max(8, Math.min(12, maxPad));
     var dist = dy.getBoundingClientRect().top - 72;
     var t = dist <= 0 ? 1 : Math.max(0, 1 - dist / 140);
-    var pad = Math.round(base + (centerPad - base) * t);
+    var pad = Math.round(base + (pinned - base) * t);
     if (sticky.dataset.dayPad !== String(pad)) {
       sticky.dataset.dayPad = String(pad);
       sticky.style.paddingTop = pad + 'px';
@@ -392,7 +396,8 @@
       es.forEach(function (e) {
         if (!e.isIntersecting) return; var el = e.target; io.unobserve(el); var d = +(el.getAttribute('data-r') || 0);
         el.style.transition = 'opacity .7s ' + EASE + ' ' + d + 'ms, transform .7s ' + EASE + ' ' + d + 'ms'; el.style.opacity = '1'; el.style.transform = 'none';
-        setTimeout(function () { el.style.transition = ''; el.style.transform = ''; }, 800 + d);
+        syncAnims();
+        setTimeout(function () { el.style.transition = ''; el.style.transform = ''; syncAnims(); }, 800 + d);
       });
     }, { threshold: 0.1 });
     observers.push(io);
@@ -403,20 +408,25 @@
   }
   function once(name, dim, opts) {
     var el = ref(name); if (!el || Zv[dim] === 'true') return;
-    var o = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { o.disconnect(); Zv[dim] = 'true'; render(); } }, opts);
+    var o = new IntersectionObserver(function (es) {
+      if (!es.some(function (e) { return e.isIntersecting; })) return;
+      o.disconnect();
+      if (dim === 'recOn') healthRun = 0;
+      Zv[dim] = 'true'; render();
+    }, opts);
     o.observe(el); observers.push(o);
   }
   function setupObservers() {
     observers.forEach(function (o) { o.disconnect(); }); observers = [];
     reveal();
     once('demoRef', 'demoGo', { threshold: 0.3 });
-    once('recRef', 'recOn', { threshold: 0.01, rootMargin: '0px 0px -8% 0px' });
+    once('recRef', 'recOn', { threshold: 0.28, rootMargin: '0px 0px -18% 0px' });
     var health = document.getElementById('health');
     if (health && Zv.recOn !== 'true') {
       var ho = new IntersectionObserver(function (es) {
         if (!es.some(function (e) { return e.isIntersecting; })) return;
-        ho.disconnect(); Zv.recOn = 'true'; render();
-      }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+        ho.disconnect(); healthRun = 0; Zv.recOn = 'true'; render();
+      }, { threshold: 0.28, rootMargin: '0px 0px -18% 0px' });
       ho.observe(health); observers.push(ho);
     }
     var des = document.getElementById('design');
