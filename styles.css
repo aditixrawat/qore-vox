@@ -209,6 +209,47 @@ button, input { font-family: inherit; }
   object-position: 50% 34%;
 }
 
+[data-dc-tpl="103"][aria-label="On a run"],
+[data-dc-tpl="103"][aria-label="In a meeting"] {
+  display: none !important;
+}
+[data-dc-tpl="101"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+[data-dc-tpl="630"] {
+  padding-top: 108px !important;
+}
+[data-dc-tpl="636"] {
+  position: relative;
+  z-index: 81;
+}
+
+.vox-ws {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 46%;
+  height: clamp(150px, 17vw, 240px);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 18px;
+  cursor: ew-resize;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 7%, #000 86%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 7%, #000 86%, transparent 100%);
+}
+.vox-ws wave,
+.vox-ws > div {
+  width: 100%;
+}
+#demo [data-dc-tpl="50"] svg {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+
 #qv-root [style*="animation:"] {
   animation-play-state: paused !important;
 }
@@ -236,40 +277,68 @@ button, input { font-family: inherit; }
   outline: 2px solid rgba(22, 214, 189, 0.7);
   outline-offset: 3px;
 }
+.vox-hcard::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(8, 10, 12, 0.04) 32%, rgba(8, 10, 12, 0.5) 64%, rgba(8, 10, 12, 0.72) 100%);
+  opacity: 0;
+  transition: opacity 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
 .vox-tip {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 50%;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
   z-index: 5;
   box-sizing: border-box;
-  padding: 22px 24px;
+  min-height: 128px;
+  padding: 18px 18px 20px;
   display: flex;
-  align-items: center;
-  border-radius: 0;
-  background: rgba(5, 7, 9, 0.92);
-  border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: none;
-  color: rgb(240, 244, 247);
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1.45;
-  opacity: 0;
-  transform: translateY(12px);
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 18px;
+  background: rgb(16, 18, 21);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  color: rgb(236, 240, 244);
   pointer-events: none;
+  opacity: 0;
+  transform: translateY(10px);
   transition: opacity 0.22s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
+.vox-tip-k {
+  font-family: Outfit, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: rgb(82, 214, 189);
+}
+.vox-tip-b {
+  font-family: Figtree, system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+}
 @media (hover: hover) and (pointer: fine) {
+  .vox-hcard:hover::after,
+  .vox-hcard:focus-within::after {
+    opacity: 1;
+  }
   .vox-hcard:hover .vox-tip,
   .vox-hcard:focus-within .vox-tip {
     opacity: 1;
     transform: none;
   }
 }
+.vox-hcard.vox-tip-on::after,
 .vox-hcard.vox-tip-on .vox-tip {
   opacity: 1;
+}
+.vox-hcard.vox-tip-on .vox-tip {
   transform: none;
 }
 

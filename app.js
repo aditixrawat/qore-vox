@@ -27,7 +27,7 @@
   function load(name, cb) {
     window.QVD = window.QVD || {};
     if (window.QVD[name]) return cb();
-    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=copy31'; s.onload = cb; document.head.appendChild(s);
+    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=copy37'; s.onload = cb; document.head.appendChild(s);
   }
 
   // ---------- string table ----------
@@ -86,11 +86,11 @@
   function unitOf(el) { while (el && el.parentNode !== root) el = el.parentNode; return el; }
 
   // ---------- actions ----------
-  var GALLERY_LABELS = ['Front', 'Angle', 'Side', 'On a run', 'In a meeting'];
+  var GALLERY_LABELS = ['Front', 'Angle', 'Side'];
   function galleryIds() {
     var A = D.A[ctx], base = D.B[ctx], u = A['8r3djt'].u, slot = 2, i;
     for (i = 0; i < u.length; i++) if (u[i] !== base[i]) { slot = i; break; }
-    return [base[slot], A['8r3djt'].u[slot], A['1ffr29v'].u[slot], A['1f4rl0x'].u[slot], A['1w1uysn'].u[slot]];
+    return [base[slot], A['8r3djt'].u[slot], A['1ffr29v'].u[slot]];
   }
   function shopSlot() {
     var g = galleryIds(), i;
@@ -130,12 +130,12 @@
     render();
   }
   function goVoiceTab(j) {
-    j = Math.max(0, Math.min(2, j));
+    j = Math.max(0, Math.min(3, j));
     vtabLock = String(j);
     Zv.vtab = String(j);
     if (j === 0) { world = D.B[ctx].slice(); last = null; }
     else {
-      var sig = j === 1 ? '1d69h2i' : '1eg340';
+      var sig = j === 1 ? '1d69h2i' : j === 2 ? '1eg340' : '1segsum';
       var m = D.A[ctx] && D.A[ctx][sig];
       if (m && m.u) { world = m.u.slice(); last = sig; }
     }
@@ -158,7 +158,7 @@
     else if (m.u) { world = m.u.slice(); last = sig; }
     else if (!m.sc && !m.sb) return;
     if (m.u || 'c' in m || m.t) spot = ('s' in m) ? m.s : D.init.spot;
-    render();
+    if (m.u || 'c' in m || m.t || m.sc) render();
     if (m.sc) {
       if (m.sc.indexOf('getElementById') >= 0) { var f = document.getElementById('faq'); if (f) window.scrollTo({ top: f.getBoundingClientRect().top + window.scrollY - 90, behavior: 'smooth' }); }
       else {
@@ -168,7 +168,7 @@
         if (pin) { var top = pin.getBoundingClientRect().top + window.scrollY, span = pin.offsetHeight - window.innerHeight; window.scrollTo({ top: top + span * ((i + 0.5) / n), behavior: reduce ? 'auto' : 'smooth' }); }
       }
     }
-    if (m.sb) { var uc = ref('ucRef'); if (uc) uc.scrollBy({ left: m.sb * Math.min(400, uc.clientWidth * 0.8), behavior: 'smooth' }); }
+    if (m.sb) goUc(m.sb > 0 ? 1 : -1);
     if (world.some(function (id) { return K(id) === 'role-status'; })) {
       clearTimeout(toastT);
       toastT = setTimeout(function () { world = world.filter(function (id) { return K(id) !== 'role-status'; }); render(); }, 3800);
@@ -177,6 +177,41 @@
   function replayDemo() {
     var d = ref('demoRef'); if (!d) return;
     var n = frag(d.outerHTML); n.__k = d.__k; n.__id = d.__id; d.parentNode.replaceChild(n, d);
+  }
+  function goUc(dir) {
+    var uc = ref('ucRef'); if (!uc) return;
+    var cards = uc.querySelectorAll('[data-dc-tpl="641"]');
+    if (!cards.length) return;
+    var pad = parseFloat(window.getComputedStyle(uc).paddingLeft) || 0;
+    var sl = uc.scrollLeft;
+    var n = cards.length;
+    var i, best = 0, bestD = Infinity, t;
+    for (i = 0; i < n; i++) {
+      t = cards[i].offsetLeft - pad;
+      var d = Math.abs(t - sl);
+      if (d < bestD) { bestD = d; best = i; }
+    }
+    if (uc._ucI != null && Math.abs((cards[uc._ucI].offsetLeft - pad) - sl) <= 48) best = uc._ucI;
+    var next = (best + dir + n) % n;
+    uc._ucI = next;
+    var max = Math.max(0, uc.scrollWidth - uc.clientWidth);
+    var left = Math.max(0, Math.min(max, cards[next].offsetLeft - pad));
+    uc.style.setProperty('scroll-snap-type', 'none', 'important');
+    if (uc._snapT) clearTimeout(uc._snapT);
+    if (uc._tw) cancelAnimationFrame(uc._tw);
+    function restoreSnap() {
+      uc._snapT = setTimeout(function () { uc.style.setProperty('scroll-snap-type', 'x mandatory'); }, 60);
+    }
+    if (reduce) { uc.scrollLeft = left; restoreSnap(); return; }
+    var from = uc.scrollLeft, t0 = performance.now(), ms = 320;
+    function step(now) {
+      var u = Math.min(1, (now - t0) / ms);
+      var e = 1 - Math.pow(1 - u, 3);
+      uc.scrollLeft = from + (left - from) * e;
+      if (u < 1) uc._tw = requestAnimationFrame(step);
+      else { uc.scrollLeft = left; restoreSnap(); }
+    }
+    uc._tw = requestAnimationFrame(step);
   }
   root.addEventListener('click', function (e) {
     var el = e.target.closest('[data-x]'); if (!el || !root.contains(el)) return;
@@ -198,7 +233,7 @@
     var nameEl = el.querySelector('[data-dc-tpl="572"] .sc-interp, [data-dc-tpl="197"] .sc-interp, [data-dc-tpl="237"] .sc-interp');
     var clickLab = ((nameEl || el.querySelector('.sc-interp') || el).textContent || '').replace(/\s+/g, ' ').trim();
     if (el.closest('[data-dc-tpl="235"]')) {
-      var PHONE_LAB = { Transcribe: 1, Summary: 2, Summarize: 2, Summarise: 2 };
+      var PHONE_LAB = { Transcribe: 1, Summary: 2, Summarize: 2, Summarise: 2, 'Segment Summary': 3 };
       if (PHONE_LAB[clickLab] != null) { goVoiceTab(PHONE_LAB[clickLab]); return; }
     }
     if (el.closest('[data-dc-tpl="192"]')) {
@@ -210,7 +245,13 @@
       goDesignSpot(DESIGN_LAB[clickLab]);
       return;
     }
-    var sig = el.getAttribute('data-x'), m = D && D.A[ctx][sig]; if (!m) return;
+    var ucLab = el.getAttribute('aria-label') || '';
+    var ucSig = el.getAttribute('data-x') || '';
+    if (ucSig === 'ip0q4p' || ucSig === '1gu1unz' || ucLab === 'Previous' || ucLab === 'Next') {
+      goUc(ucSig === 'ip0q4p' || ucLab === 'Previous' ? -1 : 1);
+      return;
+    }
+    var sig = el.getAttribute('data-x'), m = D && D.A[ctx] && D.A[ctx][sig]; if (!m) return;
     if (m.pd) e.preventDefault();
     act(sig, m, el, e);
   });
@@ -438,20 +479,31 @@
       }, { threshold: 0.28, rootMargin: '0px 0px -18% 0px' });
       ho.observe(health); observers.push(ho);
     }
-    var des = document.getElementById('design');
-    if (des && !mv) { var o = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { o.disconnect(); loadMV(); } }, { rootMargin: '800px 0px' }); o.observe(des); observers.push(o); }
+    if (document.getElementById('design')) loadMV();
   }
 
   // ---------- 3D model ----------
   function findPh() { var all = root.querySelectorAll('div'), i; for (i = 0; i < all.length; i++) { if (!all[i].children.length && all[i].textContent.trim() === 'Loading 3D model…') return all[i]; } return null; }
+  var mvTries = 0;
   function loadMV() {
-    if (mv) return;
+    if (mv) {
+      if (!mv.isConnected) { var ph0 = findPh(); if (ph0) ph0.parentNode.replaceChild(mv, ph0); }
+      return;
+    }
     if (!document.getElementById('mv-js')) { var s = document.createElement('script'); s.type = 'module'; s.id = 'mv-js'; s.src = 'vendor/model-viewer.min.js'; document.head.appendChild(s); }
     customElements.whenDefined('model-viewer').then(function (C) {
       C.meshoptDecoderLocation = 'vendor/meshopt_decoder.js';
-      var ph = findPh(); if (!ph) return;
+      var ph = findPh();
+      if (!ph) {
+        if (mvTries++ < 25) setTimeout(loadMV, 250);
+        return;
+      }
+      if (mv) {
+        if (!mv.isConnected) ph.parentNode.replaceChild(mv, ph);
+        return;
+      }
       mv = document.createElement('model-viewer');
-      var at = { src: 'assets/vox/qore-vox.glb?v=stp2', alt: 'Qore™ Vox 3D model you can rotate', 'camera-controls': '', 'disable-zoom': '', 'touch-action': 'pan-y', 'interaction-prompt': 'none', 'shadow-intensity': '0', exposure: '1.25', 'environment-image': 'neutral', 'interpolation-decay': '140', 'min-camera-orbit': 'auto auto 40%', orientation: '180deg 0deg 0deg', 'data-keep': '' };
+      var at = { src: 'assets/vox/qore-vox.glb?v=bip1', poster: 'assets/vox/qore-vox-poster.webp', alt: 'Qore™ Vox 3D model you can rotate', 'camera-controls': '', 'disable-zoom': '', 'touch-action': 'pan-y', 'interaction-prompt': 'none', 'shadow-intensity': '0', exposure: '1.25', 'environment-image': 'neutral', 'interpolation-decay': '140', 'min-camera-orbit': 'auto auto 40%', orientation: '180deg 0deg 0deg', 'data-keep': '' };
       Object.keys(at).forEach(function (k) { mv.setAttribute(k, at[k]); });
       mv.style.cssText = 'width:100%;height:100%;background:transparent;--poster-color:transparent;display:block;';
       mv.addEventListener('load', function () { placeHotspots(); tint(); updateMV(); });
@@ -520,7 +572,46 @@
     restoreSplit();
     markPress();
     wireHealthTips();
+    wireWave();
     syncAnims();
+  }
+
+  var wsInst = null, wsHost = null;
+  function wireWave() {
+    var host = document.getElementById('rbWave');
+    if (!host || typeof WaveSurfer === 'undefined') return;
+    if (wsInst && wsHost === host && host.dataset.ws === '1') return;
+    if (wsInst) {
+      try { wsInst.destroy(); } catch (err) {}
+      wsInst = null;
+    }
+    wsHost = host;
+    host.innerHTML = '';
+    host.dataset.ws = '1';
+    var h = Math.max(72, Math.min(128, Math.round(host.clientHeight * 0.72) || 96));
+    wsInst = WaveSurfer.create({
+      container: host,
+      waveColor: 'rgb(0, 45, 70)',
+      progressColor: 'rgb(0, 45, 70)',
+      url: 'assets/audio/vox-wave.wav',
+      minPxPerSec: 100,
+      dragToSeek: false,
+      height: h,
+      cursorWidth: 0,
+      hideScrollbar: true,
+      fillParent: true,
+      autoCenter: false,
+      autoScroll: false,
+      normalize: true,
+      interact: false
+    });
+    try { wsInst.setMuted(true); wsInst.setVolume(0); } catch (err) {}
+    var media = wsInst.getMediaElement && wsInst.getMediaElement();
+    if (media) { media.style.display = 'none'; media.muted = true; media.pause(); }
+    wsInst.once('decode', function () {
+      try { wsInst.zoom(100); } catch (err) {}
+      try { wsInst.setTime(0); } catch (err) {}
+    });
   }
 
   var HEALTH_TIPS = {
@@ -549,7 +640,14 @@
       el.setAttribute('aria-label', key + '. ' + tip);
       var pop = document.createElement('span');
       pop.className = 'vox-tip';
-      pop.textContent = tip;
+      var kEl = document.createElement('span');
+      kEl.className = 'vox-tip-k';
+      kEl.textContent = key;
+      var bEl = document.createElement('span');
+      bEl.className = 'vox-tip-b';
+      bEl.textContent = tip;
+      pop.appendChild(kEl);
+      pop.appendChild(bEl);
       el.appendChild(pop);
     }
     if (healthTipBound) return;
