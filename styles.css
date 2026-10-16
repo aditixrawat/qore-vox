@@ -203,13 +203,27 @@ button, input { font-family: inherit; }
     flex-direction: column !important;
     width: 100%;
   }
-  /* day section: keep image + copy grouped instead of stretched across 100vh */
-  [data-dc-tpl="152"] {
-    height: auto !important;
-    align-content: center !important;
-  }
 }
 
 #v4-uc-4 {
-  object-position: 50% 0%;
+  object-position: 50% 34%;
+}
+
+#qv-root [style*="animation:"] {
+  animation-play-state: paused !important;
+}
+#qv-root [style*="animation:"].vox-go {
+  animation-play-state: running !important;
+}
+#qv-root .vox-anim-reset {
+  animation: none !important;
+}
+.vox-press::after {
+  animation-play-state: paused !important;
+}
+.vox-press.vox-go::after {
+  animation-play-state: running !important;
+}
+.vox-press.vox-anim-reset::after {
+  animation: none !important;
 }

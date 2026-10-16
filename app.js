@@ -7,7 +7,8 @@
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var EASE = 'cubic-bezier(0.2,0.7,0.2,1)';
   var TINT = [[0.10, 0.11, 0.12, 1], [0.16, 0.27, 0.52, 1], [0.33, 0.23, 0.17, 1]];
-  var ORBIT = ['180deg 82deg', '180deg 82deg', '180deg 82deg', '180deg 145deg'];
+  var ORBIT = ['250deg 72deg', '250deg 72deg', '250deg 72deg', '50deg 124deg'];
+  var ORBIT_R = ['0.055m', '0.055m', '0.055m', '0.082m'];
   var SPOT_NAMES = ['Mic', 'Record button', 'Privacy light', '4PD sensor'];
   var D, bp, ctx, world, spot, last = null, cache = {}, Zv = {}, toastT, mv = null, hs = null, observers = [];
   var vtabLock = null;
@@ -26,7 +27,7 @@
   function load(name, cb) {
     window.QVD = window.QVD || {};
     if (window.QVD[name]) return cb();
-    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=copy18'; s.onload = cb; document.head.appendChild(s);
+    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=copy23'; s.onload = cb; document.head.appendChild(s);
   }
 
   // ---------- string table ----------
@@ -110,6 +111,7 @@
     render();
   }
   var MOVE_TABS = ['Sleep', 'Activity', 'Sports'];
+  var moveAuto = 0, movePause = 0;
   function moveTabSlot() {
     var A = D.A[ctx], u = A['t49z4d'] && A['t49z4d'].u, base = D.B[ctx], i;
     if (!u) return 9;
@@ -187,8 +189,11 @@
     }
     if (el.getAttribute('role') === 'tab') {
       var tab = ((el.querySelector('.sc-interp') || el).textContent || '').trim();
+      if (el.closest('[aria-label="Compare with"]') && tab === 'Wellness bands') {
+        world = D.B[ctx].slice(); last = null; render(); return;
+      }
       var ti = MOVE_TABS.indexOf(tab);
-      if (ti >= 0) { goMoveTab(ti); return; }
+      if (ti >= 0) { movePause = performance.now() + 9000; moveAuto = 0; goMoveTab(ti); return; }
     }
     var nameEl = el.querySelector('[data-dc-tpl="572"] .sc-interp, [data-dc-tpl="197"] .sc-interp, [data-dc-tpl="237"] .sc-interp');
     var clickLab = ((nameEl || el.querySelector('.sc-interp') || el).textContent || '').replace(/\s+/g, ' ').trim();
@@ -241,6 +246,20 @@
     splitFrom = splitGoal;
     splitGoal = splitGoal < 50 ? 84 : 16;
     splitHold = now + 1500;
+  }
+  function driveMoveTabs(now) {
+    if (reduce || now < movePause) return;
+    var sec = document.querySelector('[data-screen-label="05b Sleep, Move, Play"]');
+    if (!sec) return;
+    var r = sec.getBoundingClientRect();
+    var on = r.top < window.innerHeight * 0.8 && r.bottom > window.innerHeight * 0.28;
+    if (!on) { moveAuto = 0; return; }
+    if (!moveAuto) { moveAuto = now + 2800; return; }
+    if (now < moveAuto) return;
+    var tabs = sec.querySelectorAll('[role="tab"]'), cur = 0, i;
+    for (i = 0; i < tabs.length; i++) if (tabs[i].getAttribute('aria-selected') === 'true') cur = i;
+    goMoveTab((cur + 1) % MOVE_TABS.length);
+    moveAuto = now + 3400;
   }
   function beginSplit(sp, e) {
     if (!sp || e.target.closest('a, button, [data-x]')) return;
@@ -296,6 +315,74 @@
     var recSec = document.getElementById('health');
     if (recSec && recSec.getBoundingClientRect().top < window.innerHeight * 0.78) set('recOn', 'true');
     if (ch) render();
+    placeDayCard();
+    syncAnims();
+  }
+  function onScreen(el) {
+    var r = el.getBoundingClientRect();
+    if (r.width < 1 || r.height < 1) return false;
+    var vh = window.innerHeight || 800, vw = window.innerWidth || 400;
+    if (r.bottom <= 0 || r.top >= vh || r.right <= 0 || r.left >= vw) return false;
+    var n = el;
+    while (n && n !== root) {
+      if (n.style && n.style.opacity !== '' && parseFloat(n.style.opacity) === 0) return false;
+      n = n.parentElement;
+    }
+    return true;
+  }
+  function syncAnims() {
+    if (reduce) return;
+    var list = root.querySelectorAll('[style*="animation:"], .vox-press');
+    var start = [], i, el;
+    for (i = 0; i < list.length; i++) {
+      el = list[i];
+      var on = onScreen(el);
+      var going = el.classList.contains('vox-go');
+      if (on && !going) start.push(el);
+      else if (!on && going) el.classList.remove('vox-go');
+    }
+    if (!start.length) return;
+    for (i = 0; i < start.length; i++) start[i].classList.add('vox-anim-reset');
+    void root.offsetWidth;
+    for (i = 0; i < start.length; i++) {
+      start[i].classList.remove('vox-anim-reset');
+      start[i].classList.add('vox-go');
+    }
+  }
+  function placeDayCard() {
+    var dy = ref('dayRef');
+    if (!dy) return;
+    var sticky = dy.firstElementChild;
+    var card = dy.querySelector('[data-dc-tpl="168"]');
+    if (!sticky || !card) return;
+    if (bp === 'd') {
+      if (sticky.dataset.dayPad) { sticky.style.paddingTop = ''; delete sticky.dataset.dayPad; }
+      return;
+    }
+    var copy = dy.querySelector('h2');
+    var copyEl = copy ? copy.parentElement : null;
+    var base = 28;
+    var chh = card.offsetHeight;
+    var copyH = copyEl ? copyEl.offsetHeight : 0;
+    var gap = 16;
+    var stickyTop = sticky.getBoundingClientRect().top;
+    var limit = window.innerHeight - 12;
+    var bar = document.querySelector('[data-dc-tpl="760"]');
+    if (bar) {
+      var br = bar.getBoundingClientRect();
+      if (br.top < window.innerHeight && br.bottom > 0) limit = window.innerHeight - bar.offsetHeight - 36;
+    }
+    var room = Math.max(0, limit - stickyTop);
+    var maxPad = Math.max(base, room - chh - gap - copyH);
+    var ideal = Math.max(base, (room - chh) / 2);
+    var centerPad = Math.min(ideal, maxPad);
+    var dist = dy.getBoundingClientRect().top - 72;
+    var t = dist <= 0 ? 1 : Math.max(0, 1 - dist / 140);
+    var pad = Math.round(base + (centerPad - base) * t);
+    if (sticky.dataset.dayPad !== String(pad)) {
+      sticky.dataset.dayPad = String(pad);
+      sticky.style.paddingTop = pad + 'px';
+    }
   }
 
   // ---------- reveal on scroll ----------
@@ -313,29 +400,6 @@
       if (el.getBoundingClientRect().top < window.innerHeight * 0.9) return;
       el.style.opacity = '0'; el.style.transform = 'translateY(22px)'; io.observe(el);
     });
-  }
-  // ---------- micro-animations: start when displayed (scrolled into view) ----------
-  var animIO = null;
-  function gateAnims() {
-    if (reduce || !('IntersectionObserver' in window)) return;
-    if (!animIO) {
-      animIO = new IntersectionObserver(function (es) {
-        es.forEach(function (e) {
-          if (!e.isIntersecting) return;
-          animIO.unobserve(e.target);
-          e.target.__animR = 1;
-          e.target.style.animationPlayState = 'running';
-        });
-      }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
-    }
-    var vh = window.innerHeight, els = root.querySelectorAll('[style*="animation"]'), i, el;
-    for (i = 0; i < els.length; i++) {
-      el = els[i];
-      if (el.__animR) continue;
-      if (el.getBoundingClientRect().top < vh * 0.9) { el.__animR = 1; continue; }
-      if (el.style.animationPlayState !== 'paused') el.style.animationPlayState = 'paused';
-      if (!el.__animW) { el.__animW = 1; animIO.observe(el); }
-    }
   }
   function once(name, dim, opts) {
     var el = ref(name); if (!el || Zv[dim] === 'true') return;
@@ -378,7 +442,7 @@
   function placeHotspots() {
     if (!mv || hs) return;
     // Side face, left to right: mic dot, record pill, privacy light. 4PD is the underside window.
-    var F = [['0.0100m 0.0034m -0.0179m', '0m 0m -1m'], ['-0.0017m 0.0027m -0.0160m', '0m 0m -1m'], ['-0.0100m 0.0034m -0.0179m', '0m 0m -1m'], ['0m -0.0024m 0m', '0m -1m 0m']];
+    var F = [['-0.0125m 0.0064m -0.0108m', '-1m 0m 0m'], ['-0.0131m 0.0049m 0m', '-1m 0m 0m'], ['-0.0125m 0.0057m 0.0112m', '-1m 0m 0m'], ['0m -0.0024m 0m', '0m -1m 0m']];
     hs = F.map(function (f, i) {
       var b = document.createElement('button');
       b.setAttribute('slot', 'hotspot-' + i); b.setAttribute('data-position', f[0]); b.setAttribute('data-normal', f[1]);
@@ -392,9 +456,9 @@
     mv.model.materials.forEach(function (m) { m.pbrMetallicRoughness.setBaseColorFactor(c); m.pbrMetallicRoughness.setRoughnessFactor(0.55); m.pbrMetallicRoughness.setMetallicFactor(0.15); });
   }
   function updateMV() {
-    if (!mv) return; var wide = bp === 'd';
-    mv.setAttribute('camera-orbit', ORBIT[spot] + (wide ? ' 0.07m' : ' 125%'));
-    mv.setAttribute('camera-target', wide && hs ? hs[spot].getAttribute('data-position') : 'auto auto auto');
+    if (!mv) return;
+    mv.setAttribute('camera-orbit', ORBIT[spot] + ' ' + ORBIT_R[spot]);
+    mv.setAttribute('camera-target', hs ? hs[spot].getAttribute('data-position') : 'auto auto auto');
     (hs || []).forEach(function (b, i) {
       var on = i === spot;
       b.style.cssText = 'position:relative;width:' + (on ? 40 : 32) + 'px;height:' + (on ? 40 : 32) + 'px;padding:0;border:0;border-radius:50%;cursor:pointer;display:grid;place-items:center;font-family:Figtree,sans-serif;font-size:13px;font-weight:700;color:#002d46;transition:all .3s ' + EASE + ';background:' + (on ? '#52b6aa' : 'rgba(255,255,255,0.92)') + ';box-shadow:' + (on ? '0 0 0 6px rgba(82,182,170,0.28), 0 8px 20px rgba(0,45,70,0.25)' : '0 0 0 4px rgba(255,255,255,0.45), 0 6px 16px rgba(0,45,70,0.2)');
@@ -436,7 +500,7 @@
     playHealth(false);
     restoreSplit();
     markPress();
-    gateAnims();
+    syncAnims();
   }
 
   function markPress() {
@@ -480,7 +544,7 @@
     var b = pick();
     load(b, function () { start(b, false); });
     window.addEventListener('scroll', onScroll, { passive: true });
-    requestAnimationFrame(function splitLoop(now) { driveSplit(now); requestAnimationFrame(splitLoop); });
+    requestAnimationFrame(function splitLoop(now) { driveSplit(now); driveMoveTabs(now); requestAnimationFrame(splitLoop); });
     var rt;
     window.addEventListener('resize', function () {
       clearTimeout(rt);
