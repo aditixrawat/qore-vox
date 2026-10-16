@@ -27,7 +27,7 @@
   function load(name, cb) {
     window.QVD = window.QVD || {};
     if (window.QVD[name]) return cb();
-    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=copy27'; s.onload = cb; document.head.appendChild(s);
+    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=copy31'; s.onload = cb; document.head.appendChild(s);
   }
 
   // ---------- string table ----------
@@ -198,7 +198,7 @@
     var nameEl = el.querySelector('[data-dc-tpl="572"] .sc-interp, [data-dc-tpl="197"] .sc-interp, [data-dc-tpl="237"] .sc-interp');
     var clickLab = ((nameEl || el.querySelector('.sc-interp') || el).textContent || '').replace(/\s+/g, ' ').trim();
     if (el.closest('[data-dc-tpl="235"]')) {
-      var PHONE_LAB = { Transcribe: 0, Summarize: 1, 'Segment Summary': 2 };
+      var PHONE_LAB = { Transcribe: 1, Summary: 2, Summarize: 2, Summarise: 2 };
       if (PHONE_LAB[clickLab] != null) { goVoiceTab(PHONE_LAB[clickLab]); return; }
     }
     if (el.closest('[data-dc-tpl="192"]')) {
@@ -362,30 +362,39 @@
     var card = dy.querySelector('[data-dc-tpl="168"]');
     if (!sticky || !card) return;
     if (bp === 'd') {
+      sticky.style.paddingBottom = '';
       if (sticky.dataset.dayPad) { sticky.style.paddingTop = ''; delete sticky.dataset.dayPad; }
+      if (card.dataset.dayH) {
+        card.style.height = 'min(100%, 640px)';
+        delete card.dataset.dayH;
+      }
       return;
     }
     var copyEl = dy.querySelector('[data-dc-tpl="153"]');
-    var base = 12;
-    var chh = card.offsetHeight;
-    var copyH = copyEl ? copyEl.offsetHeight : 0;
-    var gap = 20;
-    var stickyTop = sticky.getBoundingClientRect().top;
-    var limit = window.innerHeight - 16;
     var bar = document.querySelector('[data-dc-tpl="760"]');
+    var barH = 16;
     if (bar) {
       var br = bar.getBoundingClientRect();
-      if (br.top < window.innerHeight && br.bottom > 0) limit = window.innerHeight - bar.offsetHeight - 24;
+      if (br.top < window.innerHeight && br.bottom > 0) barH = Math.ceil(bar.offsetHeight + 20);
     }
-    var room = Math.max(0, limit - stickyTop);
-    var maxPad = room - chh - gap - copyH;
-    var pinned = Math.max(8, Math.min(12, maxPad));
-    var dist = dy.getBoundingClientRect().top - 72;
-    var t = dist <= 0 ? 1 : Math.max(0, 1 - dist / 140);
-    var pad = Math.round(base + (pinned - base) * t);
-    if (sticky.dataset.dayPad !== String(pad)) {
-      sticky.dataset.dayPad = String(pad);
-      sticky.style.paddingTop = pad + 'px';
+    sticky.style.paddingTop = '8px';
+    sticky.style.paddingBottom = barH + 'px';
+    sticky.dataset.dayPad = '1';
+    var copyH = copyEl ? copyEl.offsetHeight : 0;
+    var gap = 12;
+    var gapEl = dy.querySelector('[data-dc-tpl="152"]');
+    if (gapEl) {
+      var g = parseFloat(window.getComputedStyle(gapEl).rowGap || window.getComputedStyle(gapEl).gap);
+      if (g) gap = g;
+    }
+    var cs = window.getComputedStyle(sticky);
+    var pt = parseFloat(cs.paddingTop) || 8;
+    var pb = parseFloat(cs.paddingBottom) || barH;
+    var avail = sticky.clientHeight - pt - pb;
+    var cardH = Math.round(Math.max(152, avail - copyH - gap));
+    if (card.style.height !== cardH + 'px') {
+      card.style.height = cardH + 'px';
+      card.dataset.dayH = '1';
     }
   }
 
@@ -510,7 +519,55 @@
     playHealth(false);
     restoreSplit();
     markPress();
+    wireHealthTips();
     syncAnims();
+  }
+
+  var HEALTH_TIPS = {
+    Recovery: 'How ready you are today, from last night’s sleep and recent strain.',
+    'Heart Rate': 'Beats per minute, tracked day and night so you can see rest and effort.',
+    HRV: 'Heart-rate variability. Higher often means you are recovered; lower can mean stress or fatigue.',
+    'Blood Oxygen': 'SpO2 from the 4PD sensors, shown as a daily range.',
+    Stress: 'How loaded your body feels right now, from relaxed to stressed.'
+  };
+  var healthTipBound = false;
+  function wireHealthTips() {
+    var cards = root.querySelectorAll('.h1txnnru, .h1u8ihyy, .h1he6khm, .h1sy4s3e, .h1kn28vu');
+    var i, el, title, tip, key;
+    for (i = 0; i < cards.length; i++) {
+      el = cards[i];
+      if (el.querySelector('.vox-tip')) continue;
+      title = el.innerText || '';
+      tip = null;
+      for (key in HEALTH_TIPS) {
+        if (Object.prototype.hasOwnProperty.call(HEALTH_TIPS, key) && title.indexOf(key) >= 0) { tip = HEALTH_TIPS[key]; break; }
+      }
+      if (!tip) continue;
+      el.classList.add('vox-hcard');
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('role', 'button');
+      el.setAttribute('aria-label', key + '. ' + tip);
+      var pop = document.createElement('span');
+      pop.className = 'vox-tip';
+      pop.textContent = tip;
+      el.appendChild(pop);
+    }
+    if (healthTipBound) return;
+    healthTipBound = true;
+    root.addEventListener('click', function (e) {
+      var card = e.target.closest('.vox-hcard');
+      var open = root.querySelectorAll('.vox-hcard.vox-tip-on');
+      var j;
+      if (!card) {
+        for (j = 0; j < open.length; j++) open[j].classList.remove('vox-tip-on');
+        return;
+      }
+      if (window.matchMedia('(hover: hover) and (pointer: fine)').matches && window.innerWidth >= 980) return;
+      e.preventDefault();
+      var was = card.classList.contains('vox-tip-on');
+      for (j = 0; j < open.length; j++) open[j].classList.remove('vox-tip-on');
+      if (!was) card.classList.add('vox-tip-on');
+    });
   }
 
   function markPress() {

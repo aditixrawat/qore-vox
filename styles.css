@@ -227,3 +227,72 @@ button, input { font-family: inherit; }
 .vox-press.vox-anim-reset::after {
   animation: none !important;
 }
+
+.vox-hcard {
+  cursor: pointer;
+  position: relative;
+}
+.vox-hcard:focus-visible {
+  outline: 2px solid rgba(22, 214, 189, 0.7);
+  outline-offset: 3px;
+}
+.vox-tip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 50%;
+  z-index: 5;
+  box-sizing: border-box;
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  border-radius: 0;
+  background: rgba(5, 7, 9, 0.92);
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: none;
+  color: rgb(240, 244, 247);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.45;
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity 0.22s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .vox-hcard:hover .vox-tip,
+  .vox-hcard:focus-within .vox-tip {
+    opacity: 1;
+    transform: none;
+  }
+}
+.vox-hcard.vox-tip-on .vox-tip {
+  opacity: 1;
+  transform: none;
+}
+
+@media (max-width: 979px) {
+  [data-ref="dayRef"] [data-dc-tpl="152"] {
+    gap: 12px !important;
+    align-items: start !important;
+  }
+  [data-ref="dayRef"] [data-dc-tpl="153"] {
+    gap: 8px !important;
+  }
+  [data-ref="dayRef"] [data-dc-tpl="154"] {
+    font-size: 17px !important;
+    line-height: 1.25 !important;
+  }
+  [data-ref="dayRef"] [data-dc-tpl="156"] {
+    font-size: clamp(40px, 11vw, 56px) !important;
+  }
+  [data-ref="dayRef"] [data-dc-tpl="158"] {
+    min-height: 0 !important;
+  }
+  [data-ref="dayRef"] [data-dc-tpl="158"] span:last-child {
+    font-size: 14px !important;
+    line-height: 1.45 !important;
+  }
+}
