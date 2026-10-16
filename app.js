@@ -7,7 +7,7 @@
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var EASE = 'cubic-bezier(0.2,0.7,0.2,1)';
   var TINT = [[0.10, 0.11, 0.12, 1], [0.16, 0.27, 0.52, 1], [0.33, 0.23, 0.17, 1]];
-  var ORBIT = ['0deg 82deg', '0deg 82deg', '0deg 82deg', '0deg 155deg'];
+  var ORBIT = ['180deg 82deg', '180deg 82deg', '180deg 82deg', '180deg 145deg'];
   var SPOT_NAMES = ['Mic', 'Record button', 'Privacy light', '4PD sensor'];
   var D, bp, ctx, world, spot, last = null, cache = {}, Zv = {}, toastT, mv = null, hs = null, observers = [];
   var vtabLock = null;
@@ -26,7 +26,7 @@
   function load(name, cb) {
     window.QVD = window.QVD || {};
     if (window.QVD[name]) return cb();
-    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=copy17'; s.onload = cb; document.head.appendChild(s);
+    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=copy18'; s.onload = cb; document.head.appendChild(s);
   }
 
   // ---------- string table ----------
@@ -314,6 +314,29 @@
       el.style.opacity = '0'; el.style.transform = 'translateY(22px)'; io.observe(el);
     });
   }
+  // ---------- micro-animations: start when displayed (scrolled into view) ----------
+  var animIO = null;
+  function gateAnims() {
+    if (reduce || !('IntersectionObserver' in window)) return;
+    if (!animIO) {
+      animIO = new IntersectionObserver(function (es) {
+        es.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          animIO.unobserve(e.target);
+          e.target.__animR = 1;
+          e.target.style.animationPlayState = 'running';
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+    }
+    var vh = window.innerHeight, els = root.querySelectorAll('[style*="animation"]'), i, el;
+    for (i = 0; i < els.length; i++) {
+      el = els[i];
+      if (el.__animR) continue;
+      if (el.getBoundingClientRect().top < vh * 0.9) { el.__animR = 1; continue; }
+      if (el.style.animationPlayState !== 'paused') el.style.animationPlayState = 'paused';
+      if (!el.__animW) { el.__animW = 1; animIO.observe(el); }
+    }
+  }
   function once(name, dim, opts) {
     var el = ref(name); if (!el || Zv[dim] === 'true') return;
     var o = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { o.disconnect(); Zv[dim] = 'true'; render(); } }, opts);
@@ -355,7 +378,7 @@
   function placeHotspots() {
     if (!mv || hs) return;
     // Side face, left to right: mic dot, record pill, privacy light. 4PD is the underside window.
-    var F = [['-0.0094m 0.0012m 0.0167m', '0m 0m 1m'], ['0.0017m 0.0027m 0.0159m', '0m 0m 1m'], ['0.0095m 0.0011m 0.0166m', '0m 0m 1m'], ['0m -0.0024m 0m', '0m -1m 0m']];
+    var F = [['0.0100m 0.0034m -0.0179m', '0m 0m -1m'], ['-0.0017m 0.0027m -0.0160m', '0m 0m -1m'], ['-0.0100m 0.0034m -0.0179m', '0m 0m -1m'], ['0m -0.0024m 0m', '0m -1m 0m']];
     hs = F.map(function (f, i) {
       var b = document.createElement('button');
       b.setAttribute('slot', 'hotspot-' + i); b.setAttribute('data-position', f[0]); b.setAttribute('data-normal', f[1]);
@@ -370,7 +393,7 @@
   }
   function updateMV() {
     if (!mv) return; var wide = bp === 'd';
-    mv.setAttribute('camera-orbit', ORBIT[spot] + (wide ? ' auto' : ' 125%'));
+    mv.setAttribute('camera-orbit', ORBIT[spot] + (wide ? ' 0.07m' : ' 125%'));
     mv.setAttribute('camera-target', wide && hs ? hs[spot].getAttribute('data-position') : 'auto auto auto');
     (hs || []).forEach(function (b, i) {
       var on = i === spot;
@@ -413,6 +436,7 @@
     playHealth(false);
     restoreSplit();
     markPress();
+    gateAnims();
   }
 
   function markPress() {

@@ -203,6 +203,11 @@ button, input { font-family: inherit; }
     flex-direction: column !important;
     width: 100%;
   }
+  /* day section: keep image + copy grouped instead of stretched across 100vh */
+  [data-dc-tpl="152"] {
+    height: auto !important;
+    align-content: center !important;
+  }
 }
 
 #v4-uc-4 {
