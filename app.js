@@ -7,9 +7,10 @@
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var EASE = 'cubic-bezier(0.2,0.7,0.2,1)';
   var TINT = [[0.10, 0.11, 0.12, 1], [0.16, 0.27, 0.52, 1], [0.33, 0.23, 0.17, 1]];
-  var ORBIT = ['25deg 72deg', '80deg 82deg', '-25deg 66deg', '180deg 90deg'];
+  var ORBIT = ['25deg 72deg', '78deg 84deg', '8deg 74deg', '18deg 148deg'];
   var SPOT_NAMES = ['Mic', 'Record button', 'Privacy light', '4PD sensor'];
   var D, bp, ctx, world, spot, last = null, cache = {}, Zv = {}, toastT, mv = null, hs = null, observers = [];
+  var vtabLock = null;
   var healthRun = 0;
   var HEALTH_NUMS = [
     ['330', 82],
@@ -25,7 +26,7 @@
   function load(name, cb) {
     window.QVD = window.QVD || {};
     if (window.QVD[name]) return cb();
-    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=copy10'; s.onload = cb; document.head.appendChild(s);
+    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=copy15'; s.onload = cb; document.head.appendChild(s);
   }
 
   // ---------- string table ----------
@@ -126,6 +127,28 @@
     last = 'movetab';
     render();
   }
+  function goVoiceTab(j) {
+    j = Math.max(0, Math.min(2, j));
+    vtabLock = String(j);
+    Zv.vtab = String(j);
+    if (j === 0) { world = D.B[ctx].slice(); last = null; }
+    else {
+      var sig = j === 1 ? '1d69h2i' : '1eg340';
+      var m = D.A[ctx] && D.A[ctx][sig];
+      if (m && m.u) { world = m.u.slice(); last = sig; }
+    }
+    render();
+  }
+  function goDesignSpot(j) {
+    spot = j;
+    if (j === 0) { world = D.B[ctx].slice(); last = null; }
+    else {
+      var A = D.A[ctx], k, found = null;
+      for (k in A) if (A[k] && A[k].s === j && A[k].u) { found = k; break; }
+      if (found) { world = A[found].u.slice(); last = found; }
+    }
+    render();
+  }
   function act(sig, m, el, e) {
     if (el && /Replay/.test(el.textContent || '')) { replayDemo(); return; }
     if (m.t && last === sig) { world = D.B[ctx].slice(); last = null; }
@@ -167,25 +190,19 @@
       var ti = MOVE_TABS.indexOf(tab);
       if (ti >= 0) { goMoveTab(ti); return; }
     }
-    var phoneLab = ((el.querySelector('.sc-interp') || el).textContent || '').trim();
-    var PHONE_TABS = ['Transcribe', 'Summarize', 'Segment Summary'];
-    var pti = PHONE_TABS.indexOf(phoneLab);
-    if (pti >= 0 && el.closest('[data-dc-tpl="235"]')) {
-      var pin = ref('vPinRef');
-      if (pin) {
-        var top = pin.getBoundingClientRect().top + (window.scrollY || document.body.scrollTop || 0);
-        var span = pin.offsetHeight - window.innerHeight;
-        var dest = top + Math.max(0, span) * ((pti + 0.5) / 3);
-        try { window.scrollTo({ top: dest, behavior: reduce ? 'auto' : 'smooth' }); } catch (err) {}
-        document.body.scrollTop = dest;
-      }
-      if (pti === 0) { world = D.B[ctx].slice(); last = null; }
-      else {
-        var psig = pti === 1 ? '1d69h2i' : '1eg340';
-        var pm = D.A[ctx][psig];
-        if (pm && pm.u) { world = pm.u.slice(); last = psig; }
-      }
-      render();
+    var nameEl = el.querySelector('[data-dc-tpl="572"] .sc-interp, [data-dc-tpl="197"] .sc-interp, [data-dc-tpl="237"] .sc-interp');
+    var clickLab = ((nameEl || el.querySelector('.sc-interp') || el).textContent || '').replace(/\s+/g, ' ').trim();
+    if (el.closest('[data-dc-tpl="235"]')) {
+      var PHONE_LAB = { Transcribe: 0, Summarize: 1, 'Segment Summary': 2 };
+      if (PHONE_LAB[clickLab] != null) { goVoiceTab(PHONE_LAB[clickLab]); return; }
+    }
+    if (el.closest('[data-dc-tpl="192"]')) {
+      var LEFT_LAB = { Record: 0, Transcribe: 1, Summarise: 2 };
+      if (LEFT_LAB[clickLab] != null) { goVoiceTab(LEFT_LAB[clickLab]); return; }
+    }
+    var DESIGN_LAB = { Mic: 0, 'Record button': 1, 'Privacy light': 2, '4PD sensor': 3 };
+    if (DESIGN_LAB[clickLab] != null && el.closest('#design')) {
+      goDesignSpot(DESIGN_LAB[clickLab]);
       return;
     }
     var sig = el.getAttribute('data-x'), m = D && D.A[ctx][sig]; if (!m) return;
@@ -200,13 +217,30 @@
 
   // ---------- hero split + finishes tilt ----------
   var drag = null, finX = null, splitPid = null;
-  function setSplit(el, p) { p = Math.max(8, Math.min(92, p)); el.__sp = p; el.style.setProperty('--split', p + '%'); el.setAttribute('aria-valuenow', Math.round(p)); }
+  var splitShown = 84, splitFrom = 84, splitGoal = 16, splitT0 = 0, splitHold = 0, splitPause = 0;
+  function setSplit(el, p) { p = Math.max(8, Math.min(92, p)); splitShown = p; el.__sp = p; el.style.setProperty('--split', p + '%'); el.setAttribute('aria-valuenow', Math.round(p)); }
   function splitAt(el, e) { var r = el.getBoundingClientRect(); setSplit(el, ((e.clientX - r.left) / r.width) * 100); }
   function restoreSplit() {
     var sp = ref('splitRef'); if (!sp) return;
-    if (sp.__sp == null) sp.__sp = 50;
+    if (sp.__sp == null) sp.__sp = splitShown;
     sp.style.setProperty('--split', sp.__sp + '%');
     sp.setAttribute('aria-valuenow', Math.round(sp.__sp));
+  }
+  function driveSplit(now) {
+    if (reduce) return;
+    var sp = ref('splitRef'); if (!sp) return;
+    if (drag) { splitPause = now + 2600; splitFrom = splitShown; splitHold = splitPause; return; }
+    if (now < splitPause) return;
+    if (!splitT0) { splitT0 = now; splitHold = now + 700; setSplit(sp, splitShown); return; }
+    if (now < splitHold) return;
+    if (!splitFrom && splitFrom !== 0) splitFrom = splitShown;
+    var u = Math.min(1, (now - splitHold) / 1700);
+    var e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+    setSplit(sp, splitFrom + (splitGoal - splitFrom) * e);
+    if (u < 1) return;
+    splitFrom = splitGoal;
+    splitGoal = splitGoal < 50 ? 84 : 16;
+    splitHold = now + 1500;
   }
   function beginSplit(sp, e) {
     if (!sp || e.target.closest('a, button, [data-x]')) return;
@@ -244,7 +278,14 @@
     var ch = false;
     function set(d, v) { v = String(v); if (Zv[d] !== v) { Zv[d] = v; ch = true; } }
     var vp = ref('vPinRef');
-    if (vp) { var p = prog(vp), f1 = ref('vFillRef'), f2 = ref('vFillRef2'); if (f1) f1.style.transform = 'scaleY(' + p.toFixed(3) + ')'; if (f2) f2.style.transform = 'scaleX(' + p.toFixed(3) + ')'; set('vtab', Math.min(2, Math.floor(p * 3))); }
+    if (vp) {
+      var p = prog(vp), f1 = ref('vFillRef'), f2 = ref('vFillRef2');
+      if (f1) f1.style.transform = 'scaleY(' + p.toFixed(3) + ')';
+      if (f2) f2.style.transform = 'scaleX(' + p.toFixed(3) + ')';
+      var autoTab = String(Math.min(2, Math.floor(p * 3)));
+      if (vtabLock != null && autoTab !== vtabLock) vtabLock = null;
+      set('vtab', vtabLock != null ? vtabLock : autoTab);
+    }
     var dy = ref('dayRef');
     if (dy) { var q = prog(dy), df = ref('dayFillRef'); if (df) df.style.height = (q * 100) + '%'; set('day', Math.min(4, Math.floor(q * 5))); }
     var h = ref('heroRef'), bz = document.getElementById('buy'), br = bz ? bz.getBoundingClientRect() : null;
@@ -304,7 +345,7 @@
       C.meshoptDecoderLocation = 'vendor/meshopt_decoder.js';
       var ph = findPh(); if (!ph) return;
       mv = document.createElement('model-viewer');
-      var at = { src: 'assets/vox/qore-vox.glb?v=stp1', alt: 'Qore™ Vox 3D model you can rotate', 'camera-controls': '', 'disable-zoom': '', 'touch-action': 'pan-y', 'interaction-prompt': 'none', 'shadow-intensity': '0', exposure: '1.25', 'environment-image': 'neutral', 'interpolation-decay': '140', 'min-camera-orbit': 'auto auto 40%', 'data-keep': '' };
+      var at = { src: 'assets/vox/qore-vox.glb?v=stp2', alt: 'Qore™ Vox 3D model you can rotate', 'camera-controls': '', 'disable-zoom': '', 'touch-action': 'pan-y', 'interaction-prompt': 'none', 'shadow-intensity': '0', exposure: '1.25', 'environment-image': 'neutral', 'interpolation-decay': '140', 'min-camera-orbit': 'auto auto 40%', orientation: '180deg 0deg 0deg', 'data-keep': '' };
       Object.keys(at).forEach(function (k) { mv.setAttribute(k, at[k]); });
       mv.style.cssText = 'width:100%;height:100%;background:transparent;--poster-color:transparent;display:block;';
       mv.addEventListener('load', function () { placeHotspots(); tint(); updateMV(); });
@@ -313,13 +354,13 @@
   }
   function placeHotspots() {
     if (!mv || hs) return;
-    var c = mv.getBoundingBoxCenter(), d = mv.getDimensions();
-    var F = [[-0.30, 0.46, 0.30, '0m 0.6m 0.8m'], [0.05, 0.05, 0.50, '0m 0m 1m'], [0.42, 0.40, 0.22, '0.6m 0.6m 0m'], [0, 0, -0.5, '0m 0m -1m']];
+    // Positions are on the module itself: mic grille, side record pill, front privacy light, inner 4PD face.
+    var F = [['-0.0005m 0.0078m 0.0185m', '0m 1m 0m'], ['0.0125m 0.0074m -0.0022m', '1m 0m 0m'], ['0.0040m 0.0052m 0.0220m', '0m 0.25m 1m'], ['0.0016m -0.0015m 0.0022m', '0m -1m 0m']];
     hs = F.map(function (f, i) {
       var b = document.createElement('button');
-      b.setAttribute('slot', 'hotspot-' + i); b.setAttribute('data-position', (c.x + d.x * f[0]) + 'm ' + (c.y + d.y * f[1]) + 'm ' + (c.z + d.z * f[2]) + 'm'); b.setAttribute('data-normal', f[3]);
+      b.setAttribute('slot', 'hotspot-' + i); b.setAttribute('data-position', f[0]); b.setAttribute('data-normal', f[1]);
       b.setAttribute('data-visibility-attribute', 'visible'); b.setAttribute('aria-label', SPOT_NAMES[i]); b.textContent = String(i + 1);
-      b.addEventListener('click', function () { var A = D.A[ctx], k; for (k in A) { if (A[k].s === i && A[k].u) { act(k, A[k], null); return; } } spot = i; updateMV(); });
+      b.addEventListener('click', function (ev) { ev.stopPropagation(); goDesignSpot(i); });
       mv.appendChild(b); return b;
     });
   }
@@ -415,6 +456,7 @@
     var b = pick();
     load(b, function () { start(b, false); });
     window.addEventListener('scroll', onScroll, { passive: true });
+    requestAnimationFrame(function splitLoop(now) { driveSplit(now); requestAnimationFrame(splitLoop); });
     var rt;
     window.addEventListener('resize', function () {
       clearTimeout(rt);
