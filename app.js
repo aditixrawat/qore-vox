@@ -7,7 +7,7 @@
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var EASE = 'cubic-bezier(0.2,0.7,0.2,1)';
   var TINT = [[0.10, 0.11, 0.12, 1], [0.16, 0.27, 0.52, 1], [0.33, 0.23, 0.17, 1]];
-  var ORBIT = ['25deg 72deg', '78deg 84deg', '8deg 74deg', '18deg 148deg'];
+  var ORBIT = ['0deg 82deg', '0deg 82deg', '0deg 82deg', '0deg 155deg'];
   var SPOT_NAMES = ['Mic', 'Record button', 'Privacy light', '4PD sensor'];
   var D, bp, ctx, world, spot, last = null, cache = {}, Zv = {}, toastT, mv = null, hs = null, observers = [];
   var vtabLock = null;
@@ -26,7 +26,7 @@
   function load(name, cb) {
     window.QVD = window.QVD || {};
     if (window.QVD[name]) return cb();
-    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=copy15'; s.onload = cb; document.head.appendChild(s);
+    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=copy17'; s.onload = cb; document.head.appendChild(s);
   }
 
   // ---------- string table ----------
@@ -354,8 +354,8 @@
   }
   function placeHotspots() {
     if (!mv || hs) return;
-    // Positions are on the module itself: mic grille, side record pill, front privacy light, inner 4PD face.
-    var F = [['-0.0005m 0.0078m 0.0185m', '0m 1m 0m'], ['0.0125m 0.0074m -0.0022m', '1m 0m 0m'], ['0.0040m 0.0052m 0.0220m', '0m 0.25m 1m'], ['0.0016m -0.0015m 0.0022m', '0m -1m 0m']];
+    // Side face, left to right: mic dot, record pill, privacy light. 4PD is the underside window.
+    var F = [['-0.0094m 0.0012m 0.0167m', '0m 0m 1m'], ['0.0017m 0.0027m 0.0159m', '0m 0m 1m'], ['0.0095m 0.0011m 0.0166m', '0m 0m 1m'], ['0m -0.0024m 0m', '0m -1m 0m']];
     hs = F.map(function (f, i) {
       var b = document.createElement('button');
       b.setAttribute('slot', 'hotspot-' + i); b.setAttribute('data-position', f[0]); b.setAttribute('data-normal', f[1]);
