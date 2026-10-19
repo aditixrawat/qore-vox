@@ -27,7 +27,7 @@
   function load(name, cb) {
     window.QVD = window.QVD || {};
     if (window.QVD[name]) return cb();
-    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=copy37'; s.onload = cb; document.head.appendChild(s);
+    var s = document.createElement('script'); s.src = 'data/data-' + name + '.js?v=copy45'; s.onload = cb; document.head.appendChild(s);
   }
 
   // ---------- string table ----------
@@ -88,14 +88,14 @@
   // ---------- actions ----------
   var GALLERY_LABELS = ['Front', 'Angle', 'Side'];
   function galleryIds() {
-    var A = D.A[ctx], base = D.B[ctx], u = A['8r3djt'].u, slot = 2, i;
+    var A = D.A[ctx], base = D.B[ctx], u = A['8r3djt'].u, slot = 4, i;
     for (i = 0; i < u.length; i++) if (u[i] !== base[i]) { slot = i; break; }
     return [base[slot], A['8r3djt'].u[slot], A['1ffr29v'].u[slot]];
   }
   function shopSlot() {
     var g = galleryIds(), i;
     for (i = 0; i < world.length; i++) if (g.indexOf(world[i]) >= 0) return i;
-    return 3;
+    return 4;
   }
   function galleryIndex() {
     var g = galleryIds(), j = g.indexOf(world[shopSlot()]);
@@ -114,9 +114,9 @@
   var moveAuto = 0, movePause = 0;
   function moveTabSlot() {
     var A = D.A[ctx], u = A['t49z4d'] && A['t49z4d'].u, base = D.B[ctx], i;
-    if (!u) return 9;
+    if (!u) return 6;
     for (i = 0; i < u.length; i++) if (u[i] !== base[i]) return i;
-    return 9;
+    return 6;
   }
   function moveTabIds() {
     var A = D.A[ctx], slot = moveTabSlot();
@@ -233,7 +233,7 @@
     var nameEl = el.querySelector('[data-dc-tpl="572"] .sc-interp, [data-dc-tpl="197"] .sc-interp, [data-dc-tpl="237"] .sc-interp');
     var clickLab = ((nameEl || el.querySelector('.sc-interp') || el).textContent || '').replace(/\s+/g, ' ').trim();
     if (el.closest('[data-dc-tpl="235"]')) {
-      var PHONE_LAB = { Transcribe: 1, Summary: 2, Summarize: 2, Summarise: 2, 'Segment Summary': 3 };
+      var PHONE_LAB = { Transcribe: 1, Summary: 2, Summarize: 2, Summarise: 2, 'Segment Summary': 3, Segments: 3 };
       if (PHONE_LAB[clickLab] != null) { goVoiceTab(PHONE_LAB[clickLab]); return; }
     }
     if (el.closest('[data-dc-tpl="192"]')) {
@@ -573,7 +573,50 @@
     markPress();
     wireHealthTips();
     wireWave();
+    syncColourNames();
+    placeSpecs();
     syncAnims();
+  }
+
+  function syncColourNames() {
+    var btns = root.querySelectorAll('[data-dc-tpl="123"]');
+    var i, lab, el;
+    for (i = 0; i < btns.length; i++) {
+      lab = btns[i].getAttribute('aria-label') || '';
+      el = btns[i].querySelector('[data-dc-tpl="125"] .sc-interp');
+      if (el && lab && el.textContent !== lab) el.textContent = lab;
+    }
+  }
+
+  var SPEC_HTML = '<p class="vox-specs-title">Specifications</p>'
+    + '<dl class="vox-specs-grid">'
+    + '<div><dt>Battery</dt><dd>Up to 10 days<br>Magnetic charging</dd></div>'
+    + '<div><dt>Water and dust</dt><dd>IP68</dd></div>'
+    + '<div><dt>Sensor</dt><dd>4PD: heart rate, HRV, blood oxygen</dd></div>'
+    + '<div><dt>Voice</dt><dd>Mic, one button, blue light<br>100 min on the band</dd></div>'
+    + '<div><dt>Connectivity</dt><dd>Bluetooth 5.4</dd></div>'
+    + '<div><dt>Strap and body</dt><dd>Stretchable strap, either side<br>Premium IML body · 53g</dd></div>'
+    + '</dl>';
+
+  function placeSpecs() {
+    var card = root.querySelector('#top-buy');
+    var src = root.querySelector('#design [data-dc-tpl="587"]');
+    if (src) src.hidden = true;
+    if (!card) return;
+    var box = document.getElementById('vox-specs');
+    if (box && !card.contains(box)) { box.parentNode.removeChild(box); box = null; }
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'vox-specs';
+      box.className = 'vox-specs';
+      box.setAttribute('data-keep', '1');
+      box.innerHTML = SPEC_HTML;
+    }
+    var colour = card.querySelector('[data-dc-tpl="118"]');
+    if (box.parentNode !== card || (colour && box.nextElementSibling !== colour)) {
+      if (colour) card.insertBefore(box, colour);
+      else card.appendChild(box);
+    }
   }
 
   var wsInst = null, wsHost = null;
@@ -588,13 +631,15 @@
     wsHost = host;
     host.innerHTML = '';
     host.dataset.ws = '1';
+    var mobile = window.innerWidth < 640;
     var h = Math.max(72, Math.min(128, Math.round(host.clientHeight * 0.72) || 96));
+    var px = mobile ? 180 : 100;
     wsInst = WaveSurfer.create({
       container: host,
       waveColor: 'rgb(0, 45, 70)',
       progressColor: 'rgb(0, 45, 70)',
       url: 'assets/audio/vox-wave.wav',
-      minPxPerSec: 100,
+      minPxPerSec: px,
       dragToSeek: false,
       height: h,
       cursorWidth: 0,
@@ -609,7 +654,7 @@
     var media = wsInst.getMediaElement && wsInst.getMediaElement();
     if (media) { media.style.display = 'none'; media.muted = true; media.pause(); }
     wsInst.once('decode', function () {
-      try { wsInst.zoom(100); } catch (err) {}
+      try { wsInst.zoom(px); } catch (err) {}
       try { wsInst.setTime(0); } catch (err) {}
     });
   }
