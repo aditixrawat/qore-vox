@@ -5,7 +5,7 @@
 Consumer electronics · Wearables / wellness · D2C (India) · Client work, launched on the Pebble store
 **My role:** Product designer and front-end developer (UX, visual and interaction design, CRO structure, implementation) and creator of the page's AI-generated visuals: videos, lifestyle imagery, 3D model and app screens.
 
-**[Live demo → qore-vox.vercel.app](https://qore-vox.vercel.app)** · **[Repository → github.com/aditixrawat/qore-vox](https://github.com/aditixrawat/qore-vox)**
+**[Live demo → qore-vox-live.vercel.app](https://qore-vox-live.vercel.app)** · **[Repository → github.com/aditixrawat/qore-vox](https://github.com/aditixrawat/qore-vox)**
 
 ![Desktop hero: a close-up of the band's blue privacy light, the headline "Know your Body. Speak your Mind.", a Pre-book button, the price and the launch offer](docs/screenshots/desktop-hero.jpg)
 
